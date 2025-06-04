@@ -1,103 +1,123 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
+import { FaRobot } from 'react-icons/fa';
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.js
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [question, setQuestion] = useState('');
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const chatRef = useRef(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  useEffect(() => {
+    if (chatRef.current) {
+      chatRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
+
+  const handleSend = async () => {
+    if (!question.trim()) return;
+
+    const userMsg = { type: 'user', text: question.trim() };
+    setMessages((prev) => [...prev, userMsg]);
+    setQuestion('');
+    setLoading(true);
+
+    try {
+      const res = await axios.post('/api/chat', { question });
+      animateBotMessage(res.data.answer);
+    } catch (error) {
+      animateBotMessage('❌ Erro ao obter resposta da IA.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const animateBotMessage = (text) => {
+    let i = 0;
+    let currentText = '';
+
+    const interval = setInterval(() => {
+      currentText += text[i];
+
+      setMessages((prev) => {
+        const last = prev[prev.length - 1];
+        if (last && last.type === 'bot') {
+          const updated = [...prev.slice(0, -1), { ...last, text: currentText }];
+          return updated;
+        } else {
+          return [...prev, { type: 'bot', text: currentText }];
+        }
+      });
+
+      i++;
+      if (i >= text.length) clearInterval(interval);
+    }, 12);
+  };
+
+  return (
+    <div className="flex flex-col h-screen bg-[#0f0f0f] text-white">
+      {/* Cabeçalho */}
+      <header className="w-full bg-[#1a1a1a] border-b border-[#333] shadow-md py-4 px-4 text-center">
+        <h1 className="text-2xl md:text-3xl font-semibold text-white tracking-wide flex justify-center items-center gap-3">
+          <FaRobot className="text-[#1e88e5]" size={28} />
+          Assistente V4
+        </h1>
+      </header>
+
+      {/* Área de mensagens */}
+      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4 md:px-8 flex flex-col">
+        {/* Mensagem de boas-vindas */}
+        {messages.length === 0 && !loading && (
+          <div className="text-center text-gray-300 text-lg md:text-xl flex flex-col items-center justify-center h-full gap-2">
+            <FaRobot className="text-[#1e88e5]" size={48} />
+            <p>Olá, eu sou a Assistente V4! 😊</p>
+            <p>Em que posso ajudar você hoje?</p>
+          </div>
+        )}
+
+        {/* Conversa */}
+        {messages.map((msg, idx) => (
+          <div
+            key={idx}
+            className={`max-w-[85%] md:max-w-[70%] px-4 py-3 rounded-xl shadow-sm text-sm md:text-base leading-relaxed whitespace-pre-wrap ${
+              msg.type === 'user'
+                ? 'bg-[#1e88e5] text-white self-end ml-auto'
+                : 'bg-[#2a2a2a] text-[#f1f1f1] self-start'
+            }`}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            {msg.text}
+          </div>
+        ))}
+
+        {loading && (
+          <div className="text-sm italic text-gray-400">Assistente digitando...</div>
+        )}
+
+        <div ref={chatRef} />
+      </div>
+
+      {/* Campo de input */}
+      <div className="border-t border-[#333] bg-[#1a1a1a] p-4">
+        <div className="flex items-center gap-2">
+          <textarea
+            rows={1}
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            placeholder="Digite sua pergunta..."
+            disabled={loading}
+            className="flex-1 resize-none rounded-full border border-[#333] bg-[#121212] text-white px-5 py-3 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1e88e5] transition-all"
+          />
+          <button
+            onClick={handleSend}
+            disabled={loading || !question.trim()}
+            className="bg-[#1e88e5] hover:bg-[#1565c0] text-white font-semibold px-5 py-3 rounded-full shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Read our docs
-          </a>
+            {loading ? '...' : 'Enviar'}
+          </button>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
     </div>
   );
 }
