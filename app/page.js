@@ -1,123 +1,117 @@
-'use client';
+'use client'
 
-import { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
-import { FaRobot } from 'react-icons/fa';
+import React, { useState } from 'react';
 
-export default function Home() {
+export default function App() {
+  const [messages] = useState([
+    { role: 'user', text: 'Oi, estou interessado no produto X, como ele funciona?' },
+    { role: 'vendedor', text: 'Olá! O produto X ajuda a melhorar sua produtividade em até 50%.' },
+    { role: 'user', text: 'Tem desconto se eu comprar dois?' },
+    { role: 'vendedor', text: 'Podemos oferecer 10% se fechar agora!' },
+  ]);
+
   const [question, setQuestion] = useState('');
-  const [messages, setMessages] = useState([]);
+  const [response, setResponse] = useState('');
   const [loading, setLoading] = useState(false);
-  const chatRef = useRef(null);
 
-  useEffect(() => {
-    if (chatRef.current) {
-      chatRef.current.scrollIntoView({ behavior: 'smooth' });
+  const handleIARequest = async () => {
+    if (!question) {
+      alert('Digite uma pergunta para a assistente.');
+      return;
     }
-  }, [messages]);
 
-  const handleSend = async () => {
-    if (!question.trim()) return;
-
-    const userMsg = { type: 'user', text: question.trim() };
-    setMessages((prev) => [...prev, userMsg]);
-    setQuestion('');
     setLoading(true);
+    setResponse('');
 
     try {
-      const res = await axios.post('/api/chat', { question });
-      animateBotMessage(res.data.answer);
-    } catch (error) {
-      animateBotMessage('❌ Erro ao obter resposta da IA.');
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question, messages }),
+      });
+
+      const data = await res.json();
+      setResponse(data.answer);
+    } catch (err) {
+      console.error(err);
+      setResponse('❌ Erro ao buscar resposta da IA.');
     } finally {
       setLoading(false);
     }
   };
 
-  const animateBotMessage = (text) => {
-    let i = 0;
-    let currentText = '';
-
-    const interval = setInterval(() => {
-      currentText += text[i];
-
-      setMessages((prev) => {
-        const last = prev[prev.length - 1];
-        if (last && last.type === 'bot') {
-          const updated = [...prev.slice(0, -1), { ...last, text: currentText }];
-          return updated;
-        } else {
-          return [...prev, { type: 'bot', text: currentText }];
-        }
-      });
-
-      i++;
-      if (i >= text.length) clearInterval(interval);
-    }, 12);
-  };
-
   return (
-    <div className="flex flex-col h-screen bg-[#0f0f0f] text-white">
-      {/* Cabeçalho */}
-      <header className="w-full bg-[#1a1a1a] border-b border-[#333] shadow-md py-4 px-4 text-center">
-        <h1 className="text-2xl md:text-3xl font-semibold text-white tracking-wide flex justify-center items-center gap-3">
-          <FaRobot className="text-[#1e88e5]" size={28} />
-          Assistente V4
-        </h1>
-      </header>
+    <div style={{ padding: '2rem', backgroundColor: '#121212', color: 'white', minHeight: '100vh' }}>
+      <h1 style={{ fontSize: '1.8rem', marginBottom: '1.5rem' }}>💬 Assistente de Vendas via WhatsApp</h1>
 
-      {/* Área de mensagens */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4 md:px-8 flex flex-col">
-        {/* Mensagem de boas-vindas */}
-        {messages.length === 0 && !loading && (
-          <div className="text-center text-gray-300 text-lg md:text-xl flex flex-col items-center justify-center h-full gap-2">
-            <FaRobot className="text-[#1e88e5]" size={48} />
-            <p>Olá, eu sou a Assistente V4! 😊</p>
-            <p>Em que posso ajudar você hoje?</p>
-          </div>
-        )}
-
-        {/* Conversa */}
+      <div style={{ marginBottom: '2rem' }}>
         {messages.map((msg, idx) => (
           <div
             key={idx}
-            className={`max-w-[85%] md:max-w-[70%] px-4 py-3 rounded-xl shadow-sm text-sm md:text-base leading-relaxed whitespace-pre-wrap ${
-              msg.type === 'user'
-                ? 'bg-[#1e88e5] text-white self-end ml-auto'
-                : 'bg-[#2a2a2a] text-[#f1f1f1] self-start'
-            }`}
+            style={{
+              backgroundColor: msg.role === 'user' ? '#1e88e5' : '#2a2a2a',
+              padding: '1rem',
+              borderRadius: '10px',
+              marginBottom: '0.5rem',
+              textAlign: msg.role === 'user' ? 'right' : 'left',
+              color: 'white',
+              maxWidth: '80%',
+              marginLeft: msg.role === 'user' ? 'auto' : 0,
+            }}
           >
-            {msg.text}
+            <strong>{msg.role === 'user' ? 'Cliente' : 'Vendedor'}:</strong> {msg.text}
           </div>
         ))}
-
-        {loading && (
-          <div className="text-sm italic text-gray-400">Assistente digitando...</div>
-        )}
-
-        <div ref={chatRef} />
       </div>
 
-      {/* Campo de input */}
-      <div className="border-t border-[#333] bg-[#1a1a1a] p-4">
-        <div className="flex items-center gap-2">
-          <textarea
-            rows={1}
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            placeholder="Digite sua pergunta..."
-            disabled={loading}
-            className="flex-1 resize-none rounded-full border border-[#333] bg-[#121212] text-white px-5 py-3 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1e88e5] transition-all"
-          />
-          <button
-            onClick={handleSend}
-            disabled={loading || !question.trim()}
-            className="bg-[#1e88e5] hover:bg-[#1565c0] text-white font-semibold px-5 py-3 rounded-full shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? '...' : 'Enviar'}
-          </button>
+      <textarea
+        value={question}
+        onChange={(e) => setQuestion(e.target.value)}
+        placeholder="Ex: O que posso responder agora para convencer o cliente?"
+        rows={3}
+        style={{
+          width: '100%',
+          maxWidth: '600px',
+          padding: '1rem',
+          marginBottom: '1rem',
+          borderRadius: '8px',
+          border: '1px solid #555',
+          backgroundColor: '#1e1e1e',
+          color: 'white',
+        }}
+      />
+
+      <button
+        onClick={handleIARequest}
+        disabled={loading}
+        style={{
+          padding: '1rem 2rem',
+          backgroundColor: '#43a047',
+          color: 'white',
+          fontWeight: 'bold',
+          border: 'none',
+          borderRadius: '10px',
+          cursor: loading ? 'not-allowed' : 'pointer',
+        }}
+      >
+        {loading ? 'Consultando IA...' : '💡 Obter Sugestão da IA'}
+      </button>
+
+      {response && (
+        <div
+          style={{
+            marginTop: '2rem',
+            padding: '1rem',
+            backgroundColor: '#1a1a1a',
+            border: '1px solid #333',
+            borderRadius: '10px',
+            whiteSpace: 'pre-wrap',
+          }}
+        >
+          <h2 style={{ fontSize: '1.2rem', marginBottom: '1rem' }}>📌 Sugestão da Assistente:</h2>
+          <p>{response}</p>
         </div>
-      </div>
+      )}
     </div>
   );
 }
