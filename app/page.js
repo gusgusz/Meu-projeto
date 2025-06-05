@@ -391,7 +391,7 @@ useEffect(() => {
                ? 'bg-[#eaf5ec] text-left'
                : msg.role === 'ia'
                ? 'ml-auto bg-[#fff7cc] text-right border border-yellow-300'
-               : 'ml-auto bg-[#d2f0d8] text-right'
+               : 'ml-auto bg-[#d2f0d8] text-left'
            }`}
          
          
