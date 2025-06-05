@@ -7,22 +7,21 @@ export async function POST(request) {
   }).join('\n');
 
   const prompt = `
-Você é uma assistente de vendas experiente que ajuda vendedores a melhorar sua comunicação com clientes via WhatsApp.
-
-Aqui está a conversa atual:
-${formattedMessages}
-
-O vendedor quer saber - foque nessa pergunta: ${question}
-
-Com base nessa conversa, se precisar - forneça:
-- Dicas práticas do que responder
-- Oportunidades de usar técnicas de copywriting (urgência, escassez, prova social, autoridade)
-- Estratégias para aumentar a taxa de conversão
-
-Responda de forma clara, objetiva e como se estivesse dando conselhos diretos para o vendedor.
-
-No máximo 150 palavras de output
-`;
+  Você é uma assistente de vendas que atua como parceira do time comercial, ajudando de forma empática e estratégica na comunicação com clientes pelo WhatsApp.
+  
+  Aqui está a conversa até agora:
+  ${formattedMessages}
+  
+  O vendedor está em dúvida e gostaria de ajuda para responder melhor a esta pergunta: ${question}
+  
+  Com base na conversa, se fizer sentido, sugira:
+  - Ideias de resposta que sejam claras, empáticas e eficazes
+  - Oportunidades sutis de aplicar técnicas como urgência, prova social ou autoridade
+  - Dicas de abordagem que possam aumentar as chances de conversão
+  
+  Fale de forma natural e amigável, como se estivesse conversando com o vendedor. No máximo 150 palavras.
+  `;
+  
 
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {

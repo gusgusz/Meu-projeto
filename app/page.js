@@ -1,8 +1,8 @@
 
 
 'use client';
+import React, { useState, useEffect, useRef } from 'react';
 
-import React, { useState } from 'react';
 
 const initialContacts = [
   {
@@ -243,8 +243,12 @@ export default function App() {
   const [messageCount, setMessageCount] = useState(1);
 const [customCount, setCustomCount] = useState(5); 
 const [showIAInput, setShowIAInput] = useState(false);
-
-
+const bottomRef = useRef(null);
+useEffect(() => {
+  if (bottomRef.current) {
+    bottomRef.current.scrollIntoView({ behavior: 'smooth' });
+  }
+}, [contacts, typingMessage]);
 
 
   const selectedContact = contacts.find((c) => c.id === selectedContactId);
@@ -323,7 +327,7 @@ const [showIAInput, setShowIAInput] = useState(false);
   
   
   return (
-    <div className="flex h-screen w-full bg-[#f7faf7] text-gray-800 font-inter overflow-hidden">
+    <div className="flex h-screen bottom-0 w-full bg-[#f7faf7] text-gray-800 font-inter overflow-hidden">
       {/* Sidebar de Contatos */}
       <aside
         className={`fixed z-20 md:relative bg-white border-r border-[#d2f0d8] h-screen w-64 transform transition-transform duration-300 ease-in-out
@@ -380,15 +384,18 @@ const [showIAInput, setShowIAInput] = useState(false);
             {/* Mensagens */}
             <section className="flex-1 overflow-y-auto px-6 py-4 space-y-3 bg-[#f7faf7]">
               {selectedContact.messages.map((msg, idx) => (
-                <div
-                  key={idx}
-                  className={`p-4 rounded-2xl shadow-sm max-w-[75%] transition whitespace-pre-wrap ${
-                    msg.role === 'user'
-                      ? 'ml-auto bg-[#d2f0d8] text-right'
-                      : msg.role === 'ia'
-                      ? 'ml-auto bg-[#fff7cc] text-right border border-yellow-300'
-                      : 'bg-[#eaf5ec] text-left'
-                  }`}
+           <div
+           key={idx}
+           className={`p-4 rounded-2xl shadow-sm max-w-[75%] transition whitespace-pre-wrap ${
+             msg.role === 'user'
+               ? 'bg-[#eaf5ec] text-left'
+               : msg.role === 'ia'
+               ? 'ml-auto bg-[#fff7cc] text-right border border-yellow-300'
+               : 'ml-auto bg-[#d2f0d8] text-right'
+           }`}
+         
+         
+                  
                 >
                   <p className="text-xs text-gray-500 mb-1 font-medium uppercase tracking-wide">
                     {msg.role === 'user' ? selectedContact.name : msg.role === 'ia' ? 'IA' : 'Você'}
@@ -403,10 +410,11 @@ const [showIAInput, setShowIAInput] = useState(false);
                   <p>{typingMessage}</p>
                 </div>
               )}
+               <div ref={bottomRef} />
             </section>
   
             {/* Footer com campos de entrada */}
-            <footer className="p-4 bg-[#b9e2c4] space-y-3 shadow-inner">
+            <footer className="p-4 bg-[#b9e2c4]space-y-3 bottom-0 shadow-inner">
               <textarea
                 rows={2}
                 value={input}
