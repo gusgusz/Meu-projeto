@@ -12,14 +12,16 @@ Você é uma assistente de vendas experiente que ajuda vendedores a melhorar sua
 Aqui está a conversa atual:
 ${formattedMessages}
 
-O vendedor quer saber: ${question}
+O vendedor quer saber - foque nessa pergunta: ${question}
 
-Com base nessa conversa, forneça:
+Com base nessa conversa, se precisar - forneça:
 - Dicas práticas do que responder
 - Oportunidades de usar técnicas de copywriting (urgência, escassez, prova social, autoridade)
 - Estratégias para aumentar a taxa de conversão
 
 Responda de forma clara, objetiva e como se estivesse dando conselhos diretos para o vendedor.
+
+No máximo 150 palavras de output
 `;
 
   try {
